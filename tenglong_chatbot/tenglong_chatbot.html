@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>腾龙娱乐客服</title>
+    <style>
+        :root {
+            --primary-color: #e74c3c;
+            --primary-dark: #c0392b;
+            --primary-light: #f9ebea;
+            --accent-color: #f1c40f;
+            --text-color: #333333;
+            --text-light: #757575;
+            --bg-color: #FFFFFF;
+            --bg-light: #F5F5F5;
+            --border-color: #E0E0E0;
+            --success-color: #4CAF50;
+            --warning-color: #FFC107;
+            --error-color: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Arial', sans-serif;
+        }
+
+        body {
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+
+        /* 聊天机器人容器 */
+        #chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            width: 360px;
+            max-width: calc(100vw - 40px);
+            box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background-color: var(--bg-color);
+        }
+
+        /* 最小化状态 */
+        #chatbot-container.minimized {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+        }
+
+        /* 聊天头部 */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            cursor: pointer;
+        }
+
+        .chat-header h3 {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .chat-header-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-header-button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .chat-header-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 聊天内容区域 */
+        .chat-body {
+            height: 300px;
+            overflow-y: auto;
+            padding: 16px;
+            background-color: var(--bg-light);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 隐藏滚动条但保留功能 */
+        .chat-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-body::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        /* 消息样式 */
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* 快捷回复按钮 */
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .quick-reply-btn {
+            background-color: white;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-reply-btn:hover {
+            background-color: var(--primary-light);
+        }
+
+        /* 聊天输入区域 */
+        .chat-footer {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            background-color: white;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 8px 0;
+            font-size: 16px;
+            resize: none;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-light);
+        }
+
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-left: 8px;
+        }
+
+        .send-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .send-button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+        }
+
+        /* 最小化时的圆形按钮 */
+        .chat-bubble {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .chat-bubble svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        /* 未读消息提示 */
+        .unread-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* 打字指示器 */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            background-color: white;
+            border-radius: 18px;
+            align-self: flex-start;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-light);
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+            30% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            #chatbot-container {
+                width: 100%;
+                max-width: 100%;
+                bottom: 0;
+                right: 0;
+                border-radius: 0;
+            }
+
+            #chatbot-container.minimized {
+                width: 60px;
+                height: 60px;
+                bottom: 20px;
+                right: 20px;
+                border-radius: 30px;
+            }
+        }
+
+        /* 隐藏元素 */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 聊天机器人容器 -->
+    <div id="chatbot-container" class="minimized">
+        <!-- 最小化状态显示的气泡 -->
+        <div class="chat-bubble" id="chat-bubble">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.2L4 17.2V4H20V16Z"/>
+                <path d="M7 9H17V11H7V9Z"/>
+                <path d="M7 12H14V14H7V12Z"/>
+                <path d="M7 6H17V8H7V6Z"/>
+            </svg>
+            <div class="unread-indicator hidden">1</div>
+        </div>
+
+        <!-- 展开后的聊天界面 -->
+        <div class="chat-header" id="chat-header">
+            <h3>腾龙娱乐客服</h3>
+            <div class="chat-header-buttons">
+                <button class="chat-header-button" id="minimize-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 13H5v-2h14v2z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-body" id="chat-body">
+            <!-- 消息将在这里动态添加 -->
+        </div>
+
+        <div class="chat-footer">
+            <input type="text" class="chat-input" id="chat-input" placeholder="请输入您的问题..." autocomplete="off">
+            <button class="send-button" id="send-btn" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 问答数据库
+        const knowledgeBase = [
+            {
+                id: 1,
+                keywords: ['你好', '您好', '嗨', 'hi', 'hello', '在吗', '在线'],
+                questions: ['你好', '您好', '嗨', '在吗'],
+                answer: '您好！我是腾龙娱乐客服助理，很高兴为您服务。请问有什么可以帮助您的吗？',
+                category: '问候',
+                followUp: [2, 3, 4]
+            },
+            {
+                id: 2,
+                keywords: ['公司', '企业', '关于', '简介', '介绍', '是什么', '做什么'],
+                questions: ['腾龙娱乐是做什么的？', '公司简介', '介绍一下腾龙娱乐', '你们是干什么的'],
+                answer: '腾龙娱乐是一家专业的在线娱乐平台，提供多种游戏和娱乐服务。我们致力于为用户提供安全、公平、有趣的娱乐体验。',
+                category: '公司信息',
+                followUp: [5, 6]
+            },
+            {
+                id: 3,
+                keywords: ['游戏', '玩法', '种类', '项目', '有什么'],
+                questions: ['有哪些游戏可以玩？', '提供什么游戏？', '游戏种类', '有哪些娱乐项目'],
+                answer: '腾龙娱乐提供多种游戏类型，包括：\n1. 真人娱乐\n2. 体育赛事\n3. 电子游戏\n4. 彩票游戏\n5. 棋牌游戏\n\n您对哪一类游戏感兴趣？我可以提供更详细的信息。',
+                category: '游戏服务',
+                followUp: [7, 8, 9]
+            },
+            {
+                id: 4,
+                keywords: ['优惠', '活动', '福利', '奖金', '奖励'],
+                questions: ['有什么优惠活动？', '最新活动', '优惠政策', '奖金活动'],
+                answer: '腾龙娱乐目前有多种优惠活动：\n\n1. 新用户注册送礼金\n2. 首充优惠\n3. VIP会员专属福利\n4. 每日签到奖励\n5. 特别节日活动\n\n具体活动详情和规则，请查看网站"优惠活动"页面，或咨询在线客服。',
+                category: '优惠活动',
+                followUp: [10, 11]
+            },
+            {
+                id: 5,
+                keywords: ['联系', '电话', '邮箱', '客服', '微信', 'QQ'],
+                questions: ['怎么联系客服？', '联系方式', '客服电话', '邮箱地址'],
+                answer: '您可以通过以下方式联系我们的客服团队：\n\n📞 客服热线：[客服电话号码]\n✉️ 邮箱：[客服邮箱]\n💬 在线客服：网站右下角对话框\n⏰ 服务时间：7x24小时全天候服务',
+                category: '联系方式',
+                followUp: []
+            },
+            {
+                id: 6,
+                keywords: ['账号', '注册', '登录', '密码', '忘记', '重置'],
+                questions: ['怎么注册账号？', '忘记密码怎么办', '无法登录', '如何修改密码'],
+                answer: '关于账号问题：\n\n1. 注册：点击网站右上角"注册"按钮，填写信息即可\n2. 忘记密码：点击登录页面的"忘记密码"，通过绑定的手机或邮箱验证重置\n3. 登录问题：请确保用户名和密码正确，或尝试清除浏览器缓存\n\n如果问题仍未解决，请联系在线客服获取帮助。',
+                category: '账户管理',
+                followUp: []
+            },
+            {
+                id: 7,
+                keywords: ['充值', '存款', '入金', '支付', '怎么充'],
+                questions: ['怎么充值？', '如何存款', '支持什么支付方式', '最低充值多少'],
+                answer: '腾龙娱乐支持多种充值方式：\n\n1. 银行卡转账\n2. 支付宝\n3. 微信支付\n4. 虚拟币支付\n5. 第三方支付\n\n最低充值金额为[金额]元。充值步骤：登录账户 → 点击"充值"按钮 → 选择支付方式 → 输入金额 → 完成支付。\n\n如遇充值问题，请联系在线客服。',
+                category: '充值',
+                followUp: [12]
+            },
+            {
+                id: 8,
+                keywords: ['提现', '取款', '出金', '提款', '怎么提'],
+                questions: ['怎么提现？', '如何取款', '提款到账时间', '提现手续费'],
+                answer: '关于提现：\n\n1. 提现步骤：登录账户 → 点击"提现"按钮 → 选择提现方式 → 输入金额 → 提交申请\n2. 处理时间：正常情况下1-3个工作小时内处理完成\n3. 最低提现金额：[金额]元\n4. 手续费：[费用说明]\n\n首次提现需完成身份验证，请确保提现银行卡为本人实名账户。',
+                category: '提现',
+                followUp: []
+            },
+            {
+                id: 9,
+                keywords: ['安全', '保障', '隐私', '资金', '保护'],
+                questions: ['资金安全吗？', '个人信息安全吗', '有什么安全保障', '如何保护账户安全'],
+                answer: '腾龙娱乐高度重视用户安全：\n\n1. 资金安全：采用银行级加密技术，资金独立存管\n2. 信息安全：严格的数据保护措施，保障个人信息不外泄\n3. 账户安全：支持二次验证，定期密码更新提醒\n4. 游戏公平：所有游戏均通过国际认证，确保公平性\n\n建议您定期更改密码，不与他人分享账户信息，以保障账户安全。',
+                category: '安全保障',
+                followUp: []
+            },
+            {
+                id: 10,
+                keywords: ['VIP', '会员', '等级', '特权', '福利'],
+                questions: ['VIP有什么好处？', '会员等级', 'VIP怎么升级', '会员特权'],
+                answer: '腾龙娱乐VIP会员体系：\n\n1. 等级划分：共设VIP1-VIP10十个等级\n2. 升级方式：通过有效投注额累计或直接充值升级\n3. VIP特权：\n   - 专属客服\n   - 更高返水比例\n   - 生日礼金\n   - 升级礼金\n   - 专属活动\n   - 提现快速处理\n\n详细的VIP权益请查看网站"VIP专区"页面。',
+                category: 'VIP会员',
+                followUp: []
+            },
+            {
+                id: 11,
+                keywords: ['投诉', '建议', '意见', '不满', '问题'],
+                questions: ['我要投诉', '服务不满意', '游戏有问题', '我有意见反馈'],
+                answer: '非常抱歉给您带来不便。我们非常重视您的反馈，请您提供具体情况，包括账号、问题描述等信息，我们会优先处理您的问题。\n\n您也可以通过以下渠道正式提交投诉：\n\n1. 客服热线：[客服电话]\n2. 投诉邮箱：[投诉邮箱]\n\n我们承诺会在24小时内给您答复。',
+                category: '投诉建议',
+                followUp: []
+            },
+            {
+                id: 12,
+                keywords: ['返水', '返利', '佣金', '回馈', '比例'],
+                questions: ['有返水吗？', '返水比例是多少', '怎么拿返水', '返水规则'],
+                answer: '腾龙娱乐提供丰厚的返水政策：\n\n1. 返水比例：\n   - 真人娱乐：0.6%-1.2%\n   - 体育赛事：0.6%-1.0%\n   - 电子游戏：0.8%-1.5%\n   - 彩票游戏：0.8%-1.2%\n   - 棋牌游戏：0.6%-1.0%\n\n2. 返水时间：每日自动结算，次日发放\n3. 领取方式：登录账户 → 进入"返水中心" → 点击领取\n\nVIP会员可享受更高返水比例，详情请咨询客服。',
+                category: '返水政策',
+                followUp: []
+            },
+            {
+                id: 13,
+                keywords: ['谢谢', '感谢', '多谢', '再见', '拜拜', '不用了'],
+                questions: ['谢谢你', '感谢帮助', '再见', '拜拜', '不用了'],
+                answer: '不客气！很高兴能帮到您。如果还有其他问题，随时欢迎咨询。祝您游戏愉快，好运常伴！',
+                category: '结束语',
+                followUp: []
+            },
+            {
+                id: 14,
+                keywords: ['人工', '真人', '客服', '转人工', '人工服务'],
+                questions: ['转人工', '我要人工客服', '连接真人', '机器人没用'],
+                answer: '好的，我理解您需要更专业的帮助。我们的人工客服7x24小时为您服务。您可以：\n\n1. 拨打客服热线：[客服电话]\n2. 发送邮件至：[客服邮箱]\n3. 点击网站右下角"在线客服"按钮\n\n请提供您的问题描述和账号信息(如有)，以便我们更好地为您服务。',
+                category: '人工客服',
+                followUp: []
+            }
+        ];
+
+        // DOM元素
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const chatBubble = document.getElementById('chat-bubble');
+        const chatHeader = document.getElementById('chat-header');
+        const minimizeBtn = document.getElementById('minimize-btn');
+        const chatBody = document.getElementById('chat-body');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // 聊天状态
+        let chatHistory = [];
+        let isTyping = false;
+
+        // 初始化
+        function initChatbot() {
+            // 点击气泡展开聊天窗口
+            chatBubble.addEventListener('click', expandChatbot);
+            
+            // 点击最小化按钮
+            minimizeBtn.addEventListener('click', minimizeChatbot);
+            
+            // 发送消息
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // 输入框事件
+            chatInput.addEventListener('input', handleInput);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // 添加欢迎消息
+            setTimeout(() => {
+                addBotMessage(knowledgeBase[0].answer);
+                addQuickReplies([2, 3, 4]);
+            }, 500);
+        }
+
+        // 展开聊天窗口
+        function expandChatbot() {
+            chatbotContainer.classList.remove('minimized');
+            document.querySelector('.unread-indicator').classList.add('hidden');
+            chatInput.focus();
+        }
+
+        // 最小化聊天窗口
+        function minimizeChatbot(e) {
+            e.stopPropagation();
+            chatbotContainer.classList.add('minimized');
+        }
+
+        // 处理输入框变化
+        function handleInput() {
+            sendBtn.disabled = chatInput.value.trim() === '';
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message === '') return;
+            
+            // 添加用户消息
+            addUserMessage(message);
+            
+            // 清空输入框
+            chatInput.value = '';
+            sendBtn.disabled = true;
+            
+            // 显示机器人正在输入
+            showTypingIndicator();
+            
+            // 处理回复
+            setTimeout(() => {
+                processUserMessage(message);
+                hideTypingIndicator();
+            }, 1000);
+        }
+
+        // 添加用户消息
+        function addUserMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message user-message';
+            messageElement.textContent = message;
+            
+            chatBody.appendChild(messageElement);
+            scrollToBottom();
+            
+            // 添加到聊天历史
+            chatHistory.push({
+                sender: 'user',
+                message: message
+            });
+        }
+
+        // 添加机器人消息
+        function addBotMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message bot-message';
+            
+            // 支持换行符
+            messageElement.innerHTML = message.replace(/\n/g, '<br>');
+            
+            chatBody.appendChild(messageElement);
+            scrollToBottom();
+            
+            // 添加到聊天历史
+            chatHistory.push({
+                sender: 'bot',
+                message: message
+            });
+            
+            // 如果聊天窗口是最小化的，显示未读提示
+            if (chatbotContainer.classList.contains('minimized')) {
+                const unreadIndicator = document.querySelector('.unread-indicator');
+                unreadIndicator.textContent = '1';
+                unreadIndicator.classList.remove('hidden');
+            }
+        }
+
+        // 添加快捷回复按钮
+        function addQuickReplies(questionIds) {
+            if (!questionIds || questionIds.length === 0) return;
+            
+            const quickRepliesContainer = document.createElement('div');
+            quickRepliesContainer.className = 'quick-replies';
+            
+            questionIds.forEach(id => {
+                const question = knowledgeBase.find(item => item.id === id);
+                if (question) {
+                    const button = document.createElement('button');
+                    button.className = 'quick-reply-btn';
+                    button.textContent = question.questions[0];
+                    button.addEventListener('click', () => {
+                        // 添加用户消息
+                        addUserMessage(question.questions[0]);
+                        
+                        // 显示机器人正在输入
+                        showTypingIndicator();
+                        
+                        // 处理回复
+                        setTimeout(() => {
+                            addBotMessage(question.answer);
+                            hideTypingIndicator();
+                            
+                            // 添加后续问题的快捷回复
+                            if (question.followUp && question.followUp.length > 0) {
+                                addQuickReplies(question.followUp);
+                            }
+                        }, 1000);
+                    });
+                    
+                    quickRepliesContainer.appendChild(button);
+                }
+            });
+            
+            chatBody.appendChild(quickRepliesContainer);
+            scrollToBottom();
+        }
+
+        // 显示正在输入指示器
+        function showTypingIndicator() {
+            if (isTyping) return;
+            
+            isTyping = true;
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.id = 'typing-indicator';
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'typing-dot';
+                typingIndicator.appendChild(dot);
+            }
+            
+            chatBody.appendChild(typingIndicator);
+            scrollToBottom();
+        }
+
+        // 隐藏正在输入指示器
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+            isTyping = false;
+        }
+
+        // 处理用户消息
+        function processUserMessage(message) {
+            // 查找最匹配的回答
+            const response = findBestResponse(message);
+            
+            // 添加机器人回复
+            addBotMessage(response.answer);
+            
+            // 添加后续问题的快捷回复
+            if (response.followUp && response.followUp.length > 0) {
+                addQuickReplies(response.followUp);
+            }
+        }
+
+        // 查找最佳回答
+        function findBestResponse(message) {
+            // 转换为小写以进行不区分大小写的匹配
+            const lowerMessage = message.toLowerCase();
+            
+            // 首先检查完全匹配的问题
+            for (const item of knowledgeBase) {
+                for (const question of item.questions) {
+                    if (lowerMessage === question.toLowerCase()) {
+                        return item;
+                    }
+                }
+            }
+            
+            // 然后检查关键词匹配
+            let bestMatch = null;
+            let highestScore = 0;
+            
+            for (const item of knowledgeBase) {
+                let score = 0;
+                
+                // 计算关键词匹配分数
+                for (const keyword of item.keywords) {
+                    if (lowerMessage.includes(keyword.toLowerCase())) {
+                        score += 1;
+                    }
+                }
+                
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestMatch = item;
+                }
+            }
+            
+            // 如果找到匹配项，返回它
+            if (bestMatch && highestScore > 0) {
+                return bestMatch;
+            }
+            
+            // 如果没有找到匹配项，返回默认回复或转人工
+            return knowledgeBase.find(item => item.id === 14) || {
+                answer: "抱歉，我不太理解您的问题。请尝试换一种方式提问，或联系我们的人工客服获取帮助。",
+                followUp: []
+            };
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // 初始化聊天机器人
+        document.addEventListener('DOMContentLoaded', initChatbot);
+    </script>
+
+    <!-- 演示页面内容 -->
+    <div style="max-width: 800px; margin: 50px auto; padding: 20px; text-align: center;">
+        <h1>腾龙娱乐客服机器人演示</h1>
+        <p style="margin: 20px 0; font-size: 18px; color: #666;">
+            这是一个功能完善的腾龙娱乐客服机器人演示页面。点击右下角的聊天图标开始对话。
+        </p>
+        <div style="margin: 40px 0; padding: 20px; background-color: #f5f5f5; border-radius: 8px; text-align: left;">
+            <h2 style="margin-bottom: 15px;">客服机器人功能：</h2>
+            <ul style="list-style-type: disc; padding-left: 20px; line-height: 1.8;">
+                <li>自动回答常见问题</li>
+                <li>提供快捷回复选项</li>
+                <li>支持多轮对话</li>
+                <li>响应式设计，适配移动设备</li>
+                <li>打字动画效果</li>
+                <li>未读消息提示</li>
+                <li>可最小化/展开的界面</li>
+            </ul>
+        </div>
+        <p style="color: #888;">
+            您可以尝试询问关于游戏、充值、提现、优惠活动等问题。
+        </p>
+    </div>
+</body>
+</html>
